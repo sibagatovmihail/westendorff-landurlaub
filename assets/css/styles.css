@@ -1,4 +1,8 @@
 /* ==========================================================================
+   Designentwurf „Landurlaub bei Westendorff’s“
+   Gestaltung und Code © 2026 Mykhailo Sibahatov. Alle Rechte vorbehalten.
+   Nur zur Ansicht — keine Nutzung ohne schriftliche Vereinbarung (LICENSE).
+   --------------------------------------------------------------------------
    Landurlaub bei Westendorff's — Warthe / Usedom
    One stylesheet: fonts → tokens → base → components → sections → house page
    ========================================================================== */
@@ -1510,6 +1514,30 @@ input[type="date"].input::-webkit-date-and-time-value { text-align: left; }
 
 /* grid children never blow a column open with their min-content width */
 .island > *, .dog > *, .farm > *, .contact > *, .voices > *, .p-main > *, .tour > *, .hero__container > * { min-width: 0; }
+
+/* ---------- Draft tag + licence notice ---------- */
+.draft-tag {
+  position: fixed; left: .75rem; bottom: calc(.75rem + env(safe-area-inset-bottom, 0px)); z-index: 80;
+  display: inline-flex; align-items: center; gap: .5rem;
+  height: 2rem; padding: 0 .85rem 0 .7rem; border-radius: 999px;
+  background: rgba(31, 43, 34, .88); color: var(--paper);
+  font-size: .75rem; font-weight: 600; letter-spacing: .02em;
+  -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px);
+  pointer-events: none; user-select: none;
+  transition: bottom .5s var(--ease-jump);
+}
+.draft-tag__dot { width: .4375rem; height: .4375rem; border-radius: 50%; background: var(--sun); }
+body:has(.buybar.is-shown) .draft-tag { bottom: calc(var(--ctl-h) + 1.5rem + env(safe-area-inset-bottom, 0px)); }
+.licence-lock {
+  position: fixed; inset: 0; z-index: 1000;
+  display: grid; place-items: center; padding: 1.5rem;
+  background: rgba(20, 28, 22, .94); color: var(--paper);
+  text-align: center;
+}
+.licence-lock div { max-width: 32rem; display: grid; gap: 1rem; }
+.licence-lock b { font: 600 1.75rem/1.2 var(--font-display); }
+.licence-lock p { color: rgba(245, 240, 230, .78); font-size: 1rem; }
+.licence-lock a { color: var(--sun); }
 
 /* ---------- Reduced motion ---------- */
 @media (prefers-reduced-motion: reduce) {

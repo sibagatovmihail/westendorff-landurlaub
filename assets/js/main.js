@@ -1,6 +1,23 @@
-/* Landurlaub bei Westendorff's — all interactions, no dependencies */
+/* Designentwurf „Landurlaub bei Westendorff’s“
+   Gestaltung und Code © 2026 Mykhailo Sibahatov. Alle Rechte vorbehalten.
+   Nur zur Ansicht — keine Nutzung ohne schriftliche Vereinbarung (LICENSE).
+   Landurlaub bei Westendorff's — all interactions, no dependencies */
 (function () {
   'use strict';
+
+  /* ---------- Licence: the draft only runs where it has been licensed ----------
+     Add a domain here once a written agreement is in place. */
+  var LICENSED = ['sibagatovmihail.github.io', 'localhost', '127.0.0.1'];
+  if (location.protocol !== 'file:' && LICENSED.indexOf(location.hostname) === -1) {
+    var lock = document.createElement('div');
+    lock.className = 'licence-lock';
+    lock.setAttribute('role', 'alertdialog');
+    lock.innerHTML = '<div><b>Nicht lizenzierte Kopie</b>' +
+      '<p>Diese Website ist ein urheberrechtlich geschützter Designentwurf von Mykhailo Sibahatov und für diese Domain nicht lizenziert.</p>' +
+      '<p>Nutzungsrechte: <a href="mailto:sibagatovmihail@gmail.com">sibagatovmihail@gmail.com</a></p></div>';
+    var mount = function () { document.body.appendChild(lock); document.documentElement.style.overflow = 'hidden'; };
+    if (document.body) mount(); else document.addEventListener('DOMContentLoaded', mount);
+  }
 
   var root = document.documentElement;
   var reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
