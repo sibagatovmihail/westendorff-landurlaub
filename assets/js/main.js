@@ -60,6 +60,37 @@
     }
   }
 
+  /* ---------- Nav: sliding hover highlight (Jesus Punkt pattern) ---------- */
+  var navEl = document.querySelector('.nav');
+  if (navEl && !reduced) {
+    var glider = document.createElement('span');
+    glider.className = 'nav__glider';
+    glider.setAttribute('aria-hidden', 'true');
+    navEl.prepend(glider);
+    var moveTo = function (link) {
+      glider.style.left = link.offsetLeft + 'px';
+      glider.style.width = link.offsetWidth + 'px';
+    };
+    var showGlider = function (link) {
+      if (!navEl.classList.contains('has-glider')) {
+        glider.style.transition = 'none';        // first entry: appear in place, no slide-in from 0
+        moveTo(link);
+        void glider.offsetWidth;
+        glider.style.transition = '';
+        navEl.classList.add('has-glider');
+      } else {
+        moveTo(link);
+      }
+    };
+    var hideGlider = function () { navEl.classList.remove('has-glider'); };
+    navEl.querySelectorAll('.nav__link').forEach(function (link) {
+      link.addEventListener('mouseenter', function () { showGlider(link); });
+      link.addEventListener('focus', function () { showGlider(link); });
+      link.addEventListener('blur', hideGlider);
+    });
+    navEl.addEventListener('mouseleave', hideGlider);
+  }
+
   /* ---------- Reveal on scroll ---------- */
   var reveals = document.querySelectorAll('.reveal');
   if ('IntersectionObserver' in window && !reduced) {
