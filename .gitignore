@@ -2,3 +2,5 @@ CLAUDE.md
 .DS_Store
 .playwright-mcp/
 .shots/
+font-test.html
+font-test-assets/

@@ -297,48 +297,55 @@
     });
   });
 
-  /* ---------- Anreise — marker arrives at mid-screen, dwells, travels on ---------- */
+  /* ---------- Anreise — the road is pinned; scroll drives the car ----------
+     The stage sticks under the header. Each leg = dwell at the village (40 %),
+     then a sine-eased drive to the next. ~0.6 screens of scroll per leg, a short
+     lead-in and a hold at Warthe before the page moves on. Rendered position
+     glides toward the scroll target (~150ms), never applied raw. */
   var route = document.querySelector('[data-route]');
   if (route) {
+    var pinBox = route.closest('[data-route-pin]');
     var marker = route.querySelector('.route__marker');
     var stops = Array.prototype.slice.call(route.querySelectorAll('.stop'));
     var nodes = stops.map(function (s) { return s.querySelector('.stop__node'); });
-    var axis = 'x', pos = [], anchors = [], rendered = 0, target = 0, raf = null, last = 0;
-    var DWELL = 0.4;
+    var axis = 'x', pos = [], rendered = 0, target = 0, raf = null, last = 0;
+    var DWELL = 0.4, PER_LEG = 0.6, LEAD = 0.25, HOLD = 0.35;   // in screens
+    var stickTop = 0, runLen = 1, pinned = false;
     var easeSine = function (t) { return -(Math.cos(Math.PI * t) - 1) / 2; };
 
     var measure = function () {
       axis = getComputedStyle(route).getPropertyValue('--track-axis').trim() || 'x';
       var rects = nodes.map(function (n) { return n.getBoundingClientRect(); });
       var c0 = axis === 'x' ? rects[0].left + rects[0].width / 2 : rects[0].top + rects[0].height / 2;
-      pos = rects.map(function (r) {
-        return (axis === 'x' ? r.left + r.width / 2 : r.top + r.height / 2) - c0;
-      });
-      var sy = window.scrollY;
-      if (axis === 'y') {
-        // each village is reached exactly when it crosses the middle of the screen
-        anchors = rects.map(function (r) { return r.top + r.height / 2 + sy - vhPx / 2; });
-      } else {
-        // one horizontal line: spread the legs across the line's pass through the lower 2/3 of the screen,
-        // ~0.7px of scroll per px travelled, never less than 0.6 screens overall
-        var lineY = rects[0].top + sy;
-        var span = Math.max(vhPx * 0.6, Math.min(pos[pos.length - 1] * 0.7, vhPx * 0.62));
-        var start = lineY - vhPx * 0.82;
-        anchors = pos.map(function (_, i) { return start + span * i / (pos.length - 1); });
+      pos = rects.map(function (r) { return (axis === 'x' ? r.left + r.width / 2 : r.top + r.height / 2) - c0; });
+      pinned = !!pinBox && !reduced && axis === 'y';          // only the vertical (phone) road is pinned
+      if (pinBox && !pinned) { pinBox.classList.remove('is-pinned'); pinBox.style.height = ''; }
+      if (pinned) {
+        var legs = pos.length - 1;
+        runLen = vhPx * (LEAD + legs * PER_LEG + HOLD);
+        var stage = pinBox.firstElementChild;
+        pinBox.classList.add('is-pinned');
+        pinBox.style.height = (stage.offsetHeight + runLen) + 'px';
+        stickTop = parseFloat(getComputedStyle(stage).top) || 0;
       }
     };
-    var targetFor = function (s) {
-      if (s <= anchors[0]) return 0;
-      var n = anchors.length - 1;
-      if (s >= anchors[n]) return pos[n];
-      for (var i = 0; i < n; i++) {
-        if (s < anchors[i + 1]) {
-          var u = (s - anchors[i]) / (anchors[i + 1] - anchors[i]);
-          var t = u < DWELL ? 0 : easeSine((u - DWELL) / (1 - DWELL));
-          return pos[i] + (pos[i + 1] - pos[i]) * t;
-        }
+    // read live every frame — content above (lazy images, fonts) may still shift the pin
+    var targetFor = function () {
+      var n = pos.length - 1, s;
+      if (pinned) {
+        s = (stickTop - pinBox.getBoundingClientRect().top) / vhPx - LEAD;   // screens into the drive
+      } else {
+        // wide screens: the line is visible whole — drive while it passes from 85 % to 25 % of the screen
+        var r = route.getBoundingClientRect();
+        var frac = Math.max(0, Math.min(1, (vhPx * 0.85 - r.top) / (vhPx * 0.6)));
+        s = frac * n * PER_LEG;
       }
-      return pos[n];
+      if (s <= 0) return 0;
+      var leg = Math.floor(s / PER_LEG);
+      if (leg >= n) return pos[n];
+      var u = (s - leg * PER_LEG) / PER_LEG;
+      var t = u < DWELL ? 0 : easeSine((u - DWELL) / (1 - DWELL));
+      return pos[leg] + (pos[leg + 1] - pos[leg]) * t;
     };
     var paint = function (v) {
       marker.style.setProperty('--mx', axis === 'x' ? v + 'px' : '0px');
@@ -349,7 +356,6 @@
     var loop = function (now) {
       var dt = Math.min(64, now - (last || now));
       last = now;
-      // never apply the scroll position raw — glide toward it (~150ms)
       rendered += (target - rendered) * (1 - Math.exp(-dt / 150));
       if (Math.abs(target - rendered) < 0.4) rendered = target;
       paint(rendered);
@@ -357,13 +363,13 @@
       if (!raf) last = 0;
     };
     var update = function () {
-      target = targetFor(window.scrollY);
+      target = targetFor();
       if (!raf) raf = requestAnimationFrame(loop);
     };
     var init = function () {
       measure();
       if (reduced) { rendered = target = pos[pos.length - 1]; paint(rendered); return; }
-      target = rendered = targetFor(window.scrollY);
+      target = rendered = targetFor();
       paint(rendered);
     };
     init();
